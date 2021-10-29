@@ -110,28 +110,31 @@ mov wager, 0
 ret
 askwager endp
 
-init proc					; plant mines, set player position to 0,0,0
-mov eax, 0
+init proc					; plant mines, set player position to 1,1,1
+mov [minefield], 0			; clear the minefield
+mov eax, 0					; set loop count to zero
 initloop:
-push eax
-mov edx, 0
+push eax					; push loop count on stack
+failloop:
+mov edx, 0					; set upper 32 bits of dividend to zero
 call rand
-mov ebx, 28
-div ebx
-mov eax, 1
-mov ecx, edx
-shl eax, cl
-and eax, [minefield]
-cmp eax, 0
-jnz initloop
-add eax, 1
-shl eax, cl
-or [minefield], eax
-pop eax
-add eax, 1
-cmp eax, 5
-jnz initloop
-mov position, 0
+mov ebx, 24					; set divisor to 24
+div ebx						; divide to get remainder
+mov eax, 1					; add one to remainder so it can't be at player start
+mov ecx, edx				; move into cl (lower half of ecx)
+add ecx, 1					; set single bit to shift
+shl eax, cl					; shift (This is equivalent to 2^cl)
+and eax, [minefield]		; check for mine
+cmp eax, 0					; 0 if no mine
+jnz failloop				; restart if mine exists
+add eax, 1					
+shl eax, cl					; recalculate mine value
+or [minefield], eax			; add mine to field
+pop eax						; get back loop count
+add eax, 1					; add one to loop count
+cmp eax, 5					; check if we have added 5 mines
+jnz initloop				; continue loop if not
+mov position, 0				; set player position to 1,1,1
 ret
 init endp
 
@@ -141,12 +144,20 @@ ret
 checkValid endp
 
 checkMine proc				; check if mine at position
-mov eax, 0
+mov ecx, [position]
+mov eax, 1
+shl eax, cl
+and eax, [minefield]
 ret
 checkMine endp
 
 checkWin proc				; check if position in winning position
+cmp [position], 26
+jz setWin
 mov eax, 0
+ret
+setWin:
+mov eax, 1
 ret
 checkWin endp
 
@@ -189,19 +200,20 @@ push offset takePos
 call scanf
 add esp, 4*4
 
+
+call checkValid				; Check move is valid
+cmp eax,0
+jnz lose
+
 call convertPos
 mov [position], eax			; store player position
 
-call checkValid				; Check move is valid
-cmp responsePos,0
-jnz lose
-
 call checkMine				; Check if there's a mine
-cmp responsePos+4,0
+cmp eax,0
 jnz lose
 
 call checkWin				; Check if they're on 3,3,3
-cmp responsePos+8,0
+cmp eax,0
 jnz win
 
 jmp play					; Continue game if no conditions met
