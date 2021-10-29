@@ -169,8 +169,9 @@ push offset responsePos
 push offset takePos
 call scanf
 add esp, 4*4
+call convertPos
 call checkValid				; Check move is valid
-cmp responsePos,0
+cmp responsePos,4
 jnz lose
 call checkMine				; Check if there's a mine
 cmp responsePos+4,0
@@ -189,7 +190,33 @@ call play
 ret
 game endp
 
-convertPos proc				; convert input position to 
+convertPos proc				; convert input position to a single value
+							; pos = (x-1)+3(y-1)+9(z-1)
+push eax					; store state
+push ebx
+push ecx
 
+mov eax, responsePos+8		; load Z into eax
+sub eax, 1					
+mov ebx, 9
+mul ebx
+mov ecx, eax				; store result in ecx
+
+mov eax, responsePos+4		; load Y into eax
+sub eax, 1
+mov ebx, 3
+mul ebx
+
+add eax, ecx				
+add eax, responsePos		; add X to result
+sub eax, 1					; subtract 1 for x
+
+mov [position], eax
+
+pop ecx						; restore state
+pop ebx
+pop eax
+
+ret
 convertPos endp
 end
