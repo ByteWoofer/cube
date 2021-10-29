@@ -113,23 +113,32 @@ askwager endp
 init proc					; plant mines, set player position to 1,1,1
 mov [minefield], 0			; clear the minefield
 mov eax, 0					; set loop count to zero
+
 initloop:
 push eax					; push loop count on stack
+
 failloop:
+
+							;;; get new position for mine
 mov edx, 0					; set upper 32 bits of dividend to zero
-call rand
+call rand					; put random value into eax
 mov ebx, 24					; set divisor to 24
 div ebx						; divide to get remainder
+
+							;;; convert position to format for minefield
 mov eax, 1					; add one to remainder so it can't be at player start
 mov ecx, edx				; move into cl (lower half of ecx)
 add ecx, 1					; set single bit to shift
 shl eax, cl					; shift (This is equivalent to 2^cl)
+
 and eax, [minefield]		; check for mine
 cmp eax, 0					; 0 if no mine
 jnz failloop				; restart if mine exists
-add eax, 1					
+
+add eax, 1					; set single bit to shift
 shl eax, cl					; recalculate mine value
 or [minefield], eax			; add mine to field
+
 pop eax						; get back loop count
 add eax, 1					; add one to loop count
 cmp eax, 5					; check if we have added 5 mines
