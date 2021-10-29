@@ -111,7 +111,26 @@ ret
 askwager endp
 
 init proc					; plant mines, set player position to 0,0,0
-mov minefield, 0
+mov eax, 0
+initloop:
+push eax
+mov edx, 0
+call rand
+mov ebx, 28
+div ebx
+mov eax, 1
+mov ecx, edx
+shl eax, cl
+and eax, [minefield]
+cmp eax, 0
+jnz initloop
+add eax, 1
+shl eax, cl
+or [minefield], eax
+pop eax
+add eax, 1
+cmp eax, 5
+jnz initloop
 mov position, 0
 ret
 init endp
@@ -169,18 +188,23 @@ push offset responsePos
 push offset takePos
 call scanf
 add esp, 4*4
+
 call convertPos
+mov [position], eax			; store player position
+
 call checkValid				; Check move is valid
-cmp responsePos,4
+cmp responsePos,0
 jnz lose
+
 call checkMine				; Check if there's a mine
 cmp responsePos+4,0
 jnz lose
+
 call checkWin				; Check if they're on 3,3,3
 cmp responsePos+8,0
 jnz win
+
 jmp play					; Continue game if no conditions met
-ret
 play endp
 
 game proc					; handle prompting and setting up rounds/wagers
@@ -190,10 +214,9 @@ call play
 ret
 game endp
 
-convertPos proc				; convert input position to a single value
+convertPos proc				; convert input position to a single value, return in eax
 							; pos = (x-1)+3(y-1)+9(z-1)
-push eax					; store state
-push ebx
+push ebx					; store state
 push ecx
 
 mov eax, responsePos+8		; load Z into eax
@@ -211,12 +234,10 @@ add eax, ecx
 add eax, responsePos		; add X to result
 sub eax, 1					; subtract 1 for x
 
-mov [position], eax
-
 pop ecx						; restore state
 pop ebx
-pop eax
 
 ret
 convertPos endp
+
 end
