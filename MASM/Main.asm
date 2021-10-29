@@ -131,25 +131,27 @@ mov eax, 0
 ret
 checkWin endp
 
-win proc
+win proc					; Player wins the round
 mov eax, [money]
 add eax, wager 
 add eax, wager
-mov money, eax
+mov money, eax				; double wagered money and add to money
+
 push money
 push offset winMsg
-call printf
+call printf					; display win message
 add esp,8
+
 ret
 win endp
 
-lose proc
-push offset bangMsg
-call printf
+lose proc					; Player loses the round
+push offset bangMsg	
+call printf					; Display bang message
 add esp,4
 
 push money
-push offset loseMsg
+push offset loseMsg			; Display lose message
 call printf
 add esp,8
 ret
@@ -167,24 +169,27 @@ push offset responsePos
 push offset takePos
 call scanf
 add esp, 4*4
-call checkValid
+call checkValid				; Check move is valid
 cmp responsePos,0
 jnz lose
-call checkMine
+call checkMine				; Check if there's a mine
 cmp responsePos+4,0
 jnz lose
-call checkWin
+call checkWin				; Check if they're on 3,3,3
 cmp responsePos+8,0
 jnz win
-jmp play
+jmp play					; Continue game if no conditions met
 ret
 play endp
 
-game proc
+game proc					; handle prompting and setting up rounds/wagers
 call askwager
 call init
 call play
 ret
 game endp
 
+convertPos proc				; convert input position to 
+
+convertPos endp
 end
